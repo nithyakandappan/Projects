@@ -1,0 +1,84 @@
+1. Compile:
+make clean
+make all
+
+2. Build code book for single file:
+./fileCompressor -b ./testfolder/test2.txt
+HuffmanCodebook is created
+
+3. Compress single file with the generated code book
+./fileCompressor -c ./testfolder/test2.txt ./HuffmanCodebook
+./testfolder/test2.txt.hcz is created
+
+4. Decompress single file with the HuffmanCodebook:
+./fileCompressor -d ./testfolder/test2.txt.hcz ./HuffmanCodebook
+./testfolder/test2.txt is generated
+
+Compare test2.txt before and after:
+
+ls -l testfolder/test2.txt		843 Apr  1 17:51 testfolder/test2.txt
+ls -l testfolder_archive/test2.txt	843 Apr  1 09:12 testfolder_archive/test2.txt
+
+5. Build code book recursively for a folder:
+./fileCompressor -b -R ./testfolder/testfolder2/testfolder3/testfolder4
+A HuffmanCodebook is created for all files in the folder except .hcz files if any
+
+6. Compress files in a folder recursively
+./fileCompressor -c -R ./testfolder/testfolder2/testfolder3/testfolder4 ./HuffmanCodebook
+all files except .hcz files in the folder will be compressed
+
+7. Decompress files in a folder recursively (have to remove non-.hcz files first)
+./fileCompressor -d -R ./testfolder/testfolder2/testfolder3/testfolder4 ./HuffmanCodebook
+all .hcz files in the folder will be decompressed, non-.hcz files will be skipped
+
+8. Build code book recursively for a folder with nested subfolders:
+./fileCompressor -R -b ./testfolder
+A HuffmanCodebook is created for all files in the folder except .hcz files if any
+
+9. Compress files recursively in a folder with nested subfolders:
+./fileCompressor -R -c ./testfolder ./HuffmanCodebook
+
+10. Decompress files recursively in a folder with nested subfolders:
+./fileCompressor -d -R ./testfolder ./HuffmanCodebook
+All .hcz files are decompressed
+
+11. Decompress individual file using a code book built for the folder which contains the file and other files, works fine:
+./fileCompressor -d ./testfolder/test2.txt.hcz ./HuffmanCodebook
+
+12. When recursive argument -R is provided yet only a file rather than directory is provided as argument, error is generated:
+./fileCompressor -b -R ./testfolder/test2.txt
+Error: You provided the recursive argument but did not provide a directory to recurse on.
+
+13. When wrong file name is supplied in the argument, error is caught:
+./fileCompressor -b ./testfolder/test8.txt
+** Error: invalid input = |./testfolder/test8.txt|
+
+14. Test to build codebook, compress and decompress a file containg a tab.
+./fileCompressor -b ./testfolder/test3.txt
+./fileCompressor -c ./testfolder/test3.txt ./HuffmanCodebook
+./fileCompressor -d ./testfolder/test3.txt.hcz ./HuffmanCodebook
+
+compare file size:
+649 Apr  1 18:30 testfolder_archive/test3.txt
+649 Apr  1 18:34 testfolder/test3.txt
+cat ./testfolder/test3.txt
+Here is a THIRD FILE. 		This file has some numbers.
+
+15. When a wrong codebook name is supplied, an error will be returned:
+./fileCompressor -c ./testfolder/test2.txt ./HuffmanCodeboo
+** Error: codebook |./HuffmanCodeboo| is not a valid file.
+
+16. When the arguments include -R but only a filename is supplied, a warning will be returned but the file will be processed as if -R is not supplied:
+./fileCompressor -b -R ./testfolder/test2.txt
+Warning: You provided the recursive argument but did not provide a directory to recurse on.
+
+17. If words in a file to be compressed do not exist in the codebook, an error will be outputted. 
+For example, a code book for test2.txt is built; however the code book is used to compress test3.txt:
+./fileCompressor -b./testfolder/test2.txt
+./fileCompressor -c ./testfolder/test3.txt ./HuffmanCodebook
+
+Warning: Could not find bitcode for the given word (token).
+
+18. When two different flags, neither of which is -R, are used, an error is returned:
+./fileCompressor -b -c ./HarryPotter.txt
+Error: These flags cannot be used together. Only -R can be used with another flag.
