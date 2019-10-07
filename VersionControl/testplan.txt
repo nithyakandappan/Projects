@@ -1,0 +1,55 @@
+Consider doing these steps one by one, in order
+1. Test launching the server
+2. Test the configure method in the client - if it does not exist, the client cannot execute any command
+3. Test create
+	** check if the project already exists on either the server or client
+	** check the server side folder structure after the create
+4. Test add, into the project created in step 3
+	** check if the project exists
+	** check if the file physically exists on the client side
+	** check if the file is already in .Manifest
+	** check client .Manifest after the add
+5. Test commit
+	** check if the project exists
+	** create a fake .Update file to see if the commit could go through --the commit is not supposed to be successful in this case
+	** check the .Commit file after commit
+6. Test push
+	** check if the project and .Commit exists 
+	** check .Manifest after push
+	** check the server side archive of the older version
+	** check version number and history (combined with the next two tests)
+7. Test currentversion
+	** compare the output with the server .Manifest
+8. Test history
+	** compare the output with the server .History
+9. Prepare update, upgrade & rollback tests and Test remove - creating a situation where you need to get an update from the server - SEE testcases.txt which is more clear
+	** save a copy of the current project folder, so subsequent changes to the server can be updated into the saved copy
+	** execute an "add" followed by commit and push
+	** test remove
+		** check if the file exists in client .Manifest
+		** check .Manifest after remove
+		** execute commit and push after remove
+	** manually modify a client side file to create a "modify" scenario, followed by commit and push
+	** rename saved earlier version client project folder to the project name
+10. Test update
+	** check .Update after update command
+11. Test upgrade
+	** manually rename .Update to see if upgrade could go through
+	** record client .Manifest before update
+	** compare client .Manifest before and after update
+12. Test checkout
+	** rename a client project
+	** checkout the project that has been renamed 
+	** check the folder and files in the checked out project directory
+13. Test destroy
+	** create two projects
+	** delete the two projects
+	** check the folder names on the client and server side
+	** delete client side folders after server project is destroyed
+14. Test rollback
+	** check currentversion, check server side folder structure
+	** rollback to one version earlier
+	** check currentversion
+	** check server side folder structure
+	** check history
+

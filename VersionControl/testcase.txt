@@ -1,0 +1,374 @@
+-------------------------------------------------------
+** 1. Test launch server
+-------------------------------------------------------
+** issue the client command
+      ./WTFserver 12345
+** output:
+***********************************
+listening on port 12345
+
+** in server, mutex initialized
+
+waiting for client
+***********************************
+
+-------------------------------------------------------
+** 2. Test client configure
+-------------------------------------------------------
+** issue the client command while the .configure file doesn't exist (expects an error)
+	./WTF create myproj
+** output:
+***********************************
+File ./.configure does not exist. Run ./WTF configure first
+***********************************
+** issue client command
+	./WTF configure 127.0.0.1 12345
+** check .configure
+	cat .configure
+** output: 127.0.0.1:12345
+
+-------------------------------------------------------
+** 3. Test create
+-------------------------------------------------------
+** issue client command
+     ./WTF create myproj8
+
+** for the server, Repository/myproj8/master folder has been created
+** .Manifest has been created inside the "master" folder with one row:          
+0 (version number), representing initial project version
+** client folder myproj8 created with the same .Manifest inside
+
+** issue the client command to create the same project (expects an error)
+	./WTF create myproj8
+** error: Error: the project folder myproj8 already exists in the client
+
+-------------------------------------------------------
+** 4. Test add
+-------------------------------------------------------
+
+** copy all folders/files from inside test_seed to myproj8 
+   1) ../myproj8/file1.c
+   2) ../myproj8/file4.txt
+   3) ../myproj8/subdir1/file2.txt
+   4) ../myproj8/subdir1/test3.h
+   5) ../myproj8/subdir2/file3.txt
+
+** issue the client command for a project that does not exist (expects an error)
+	./WTF add myproj9 file1.c
+** output: project does not exist, projectname=|myproj9|
+
+** issue the client command for fa file that does not exist (expects an error)
+	./WTF add myproj8 file2.c
+** output:
+***********************************
+** file does not exist, filePath=|myproj8/file2.c|
+** make sure to include subdirectories in the input filename under the project folder |myproj8|
+** example: subdir1/subdir2/data.txt
+***********************************
+** check the client project folder .Manifest before "add":
+cat .Manifest
+0
+
+** issue the client command
+	./WTF add myproj8 file1.c
+	./WTF add myproj8 subdir1/file2.txt
+
+** check the client project folder .Manifest after "add":
+***********************************
+cat .Manifest
+0
+subdir1/file2.txt	1	a0bbc50dc06b94fee77b7d6a54f01a615ec3533e
+file1.c	1	869396a121ec854c368da6a02799d84661ee495f
+***********************************
+
+** issue the client command to add a file that has already been added (expects an error)
+	./WTF add myproj8 file1.c
+** output: Warning: cannot add, file is already in .Manifest, filename=|file1.c|
+
+-------------------------------------------------------
+** 5. Test commit
+-------------------------------------------------------
+** issue the client command for a non-existent project (expects an error)
+	./WTF commit myproj9
+** output:
+***********************************
+** Error: received server execution status. status=|ProjectDoesNotExist|
+** check test project folder for client and server
+***********************************
+
+** issue the client command after including a .Update file (expects an error)
+	./WTF commit myproj8
+** output: in client, the .Update file should not be present
+
+** issue client command (after removing .Update)
+	./WTF commit myproj8
+** after running WTF command, check these files:
+   ** client
+      ../myproj8/.Commit
+      ../myproj8/.serverManifest
+      ../myproj8/.Manifest
+   ** server
+      ../Repository/myproj8/.CommitActive
+** check .Commit
+***********************************
+cat .Commit
+Add	subdir1/file2.txt	1	a0bbc50dc06b94fee77b7d6a54f01a615ec3533e
+Add	file1.c	1	869396a121ec854c368da6a02799d84661ee495f
+***********************************
+
+-------------------------------------------------------
+** 6. Test push
+-------------------------------------------------------
+** rename .Commit followed by issuing the client command (expects an error)
+	mv .Commit .Commit2
+	./WTF push myproj8
+** output: in client, the .Commit file should be present
+
+** issue the client command (after recovering .Commit)
+	./WTF push myproj8
+** check the test project folder for the client and server
+   after running the WTF command
+   ** server      
+      ../Repository/myproj8/.History
+      ../Repository/myproj8/master/.Manifest      
+      ../Repository/myproj8/v0.tar.bz2
+      (this is the compressed prior project version archive)      
+
+   ** client      
+      ../myproj8/.Manifest
+
+** check server .Manifest
+***********************************
+cat .Manifest
+1
+file1.c	1	869396a121ec854c368da6a02799d84661ee495f
+subdir1/file2.txt	1	a0bbc50dc06b94fee77b7d6a54f01a615ec3533e
+***********************************
+** check the server version and history next
+     
+-------------------------------------------------------
+** 7. Test currentversion
+-------------------------------------------------------
+** issue the client command
+	./WTF currentversion myproj8
+
+** output:
+********************************************
+** Project Name: myproj8
+--------------------------------------------
+Project version number: 1
+File Name: file1.c	Version Number: 1
+File Name: subdir1/file2.txt	Version Number: 1
+********************************************
+
+** verify the result by checking the below files:
+   ** server
+      ../Repository/myproj8/master/.Manifest
+
+-------------------------------------------------------
+** 8. Test history
+-------------------------------------------------------
+** issue the client command
+	./WTF history myproj8
+
+** output:
+*******************************************
+push
+1
+Add	subdir1/file2.txt	1	a0bbc50dc06b94fee77b7d6a54f01a615ec3533e
+Add	file1.c	1	869396a121ec854c368da6a02799d84661ee495f
+*******************************************
+
+** verify the result by checking the below files:
+   ** server
+      ../Repository/myproj8/.History
+
+-------------------------------------------------------
+** 9. Prepare update, upgrade & rollback tests and Test remove
+-------------------------------------------------------
+** keep a copy of the client project folder
+	cp -r myproj8 myproj8_v1
+** issue the client command to add, commit and push
+	./WTF add myproj8 file4.txt
+	./WTF commit myproj8
+	./WTF push myproj8
+** issue the client command to remove a file that does not exist
+	./WTF remove myproj8 file3.c
+** output: ** Warning: cannot remove, filename=|file3.c| not in .Manifest
+** issue the client command to remove a file, commit and push
+     	./WTF remove myproj8 file1.c
+** check the client .Manifest to make sure that file1.c has been removed
+*******************************************
+cat .Manifest
+2
+file4.txt	1	6356a56d45b7391d67b84bf4ab5dd84244845d45
+subdir1/file2.txt	1	a0bbc50dc06b94fee77b7d6a54f01a615ec3533e
+*******************************************
+** issue the client command to commit and push, following the removes
+     	./WTF commit myproj8
+     	./WTF push myproj8
+** manually edited the file 
+   subdir1/file2.txt
+** issue the client command to commit and push
+	./WTF commit myproj8
+	./WTF push myproj8
+
+** manually rename myproj8 to myproj8_v4
+** manually rename myproj8_v1 to myproj8
+
+-------------------------------------------------------
+** 10. Test update
+-------------------------------------------------------
+** issue the client command
+	./WTF update myproj8
+
+** check the .Update file
+*******************************************
+cat .Update
+D	file1.c	1	869396a121ec854c368da6a02799d84661ee495f
+M	subdir1/file2.txt	2	ae6b147a228ce18aab7abbf54ad5f98a3dc53c22
+A	file4.txt	1	6356a56d45b7391d67b84bf4ab5dd84244845d45
+*******************************************
+
+-------------------------------------------------------
+** 11. Test upgrade
+-------------------------------------------------------
+** manually rename .Update, issue the client command (expects an error)
+	mv .Update .Update1
+	./WTF upgrade myproj8
+** output: in the client, the .Update file should be present
+** rename .Update1 back to .Update
+	mv .Update1 .Update
+** check the client .Manifest before the upgrade
+***********************************
+cat .Manifest
+1
+file1.c	1	869396a121ec854c368da6a02799d84661ee495f
+subdir1/file2.txt	1	a0bbc50dc06b94fee77b7d6a54f01a615ec3533e
+***********************************
+** issue the client command
+	./WTF upgrade myproj8
+** check the client .Manifest after the upgrade
+***********************************
+cat .Manifest
+4
+file4.txt	1	6356a56d45b7391d67b84bf4ab5dd84244845d45
+subdir1/file2.txt	2	35e75d90763d46de300d2c6d9ecf2cd776d65d20
+***********************************
+
+-------------------------------------------------------
+** 12. Test checkout
+-------------------------------------------------------
+** manually rename the client project folder:
+	mv myproj8 myproj9
+** issue the client command
+	./WTF checkout myproj8
+** check the client project folder (manifest and folder files)
+   ../myproj8/ same as ../myproj9/
+** compare the .Manifest files from myproj8 and myproj9 (saved):
+***********************************
+cat myproj8/.Manifest
+4
+file4.txt	1	6356a56d45b7391d67b84bf4ab5dd84244845d45
+subdir1/file2.txt	2	35e75d90763d46de300d2c6d9ecf2cd776d65d20
+cat myproj9/.Manifest
+4
+file4.txt	1	6356a56d45b7391d67b84bf4ab5dd84244845d45
+subdir1/file2.txt	2	35e75d90763d46de300d2c6d9ecf2cd776d65d20
+***********************************
+
+-------------------------------------------------------
+** 13. Test destroy
+-------------------------------------------------------
+** create projects first
+** issue the client command
+	./WTF create myproj1
+	./WTF create myproj2
+
+** issue the client command, and try to delete a non-existent project
+	./WTF destroy myproj3
+** output: Error: received server execution status = |ProjectDoesNotExist|
+** issue the client command
+	./WTF destroy myproj1
+	./WTF destroy myproj2
+** check the test project folders for the client and server
+myproj1 and myproj2 folders are gone from the server, but stay on the client side
+
+-------------------------------------------------------
+** 14. Test rollback 
+-------------------------------------------------------
+** check the current version
+	./WTF currentversion myproj8
+********************************************
+** Project Name: myproj8
+--------------------------------------------
+Project version number: 4
+File Name: file4.txt	Version Number: 1
+File Name: subdir1/file2.txt	Version Number: 2
+********************************************
+
+** check the server project folder
+      	../Repository/myproj8/master/
+      	../Repository/myproj8/v0.tar.bz2
+	../Repository/myproj8/v1.tar.bz2
+	../Repository/myproj8/v1.tar.bz2
+	../Repository/myproj8/v3.tar.bz2
+
+** issue the client command      
+	./WTF rollback myproj8 3
+
+** check the current version
+	./WTF currentversion myproj8
+********************************************
+** Project Name: myproj8
+--------------------------------------------
+Project version number: 3
+File Name: file4.txt	Version Number: 1
+File Name: subdir1/file2.txt	Version Number: 1
+********************************************
+
+** issue the client command
+	./WTF rollback myproj8 1
+
+** check the current version
+	./WTF currentversion myproj8
+********************************************
+** Project Name: myproj8
+--------------------------------------------
+Project version number: 1
+File Name: file1.c	Version Number: 1
+File Name: subdir1/file2.txt	Version Number: 1
+********************************************
+
+** recall the history
+	./WTF history myproj8
+** output:
+********************************************
+push
+1
+Add	subdir1/file2.txt	1	a0bbc50dc06b94fee77b7d6a54f01a615ec3533e
+Add	file1.c	1	869396a121ec854c368da6a02799d84661ee495f
+
+push
+2
+Add	file4.txt	1	6356a56d45b7391d67b84bf4ab5dd84244845d45
+
+push
+3
+Remove	file1.c	1	869396a121ec854c368da6a02799d84661ee495f
+
+push
+4
+Copy	subdir1/file2.txt	2	35e75d90763d46de300d2c6d9ecf2cd776d65d20
+
+rollback
+3
+Remove	file1.c	1	869396a121ec854c368da6a02799d84661ee495f
+
+rollback
+1
+Add	subdir1/file2.txt	1	a0bbc50dc06b94fee77b7d6a54f01a615ec3533e
+Add	file1.c	1	869396a121ec854c368da6a02799d84661ee495f
+********************************************
+
+
