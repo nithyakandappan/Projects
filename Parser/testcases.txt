@@ -1,0 +1,48 @@
+testCase01:
+  "All-aMerican Rejects"
+  Expected output:
+    Rejects
+    All
+    aMerican
+
+testCase02:
+  "Things77st7do" "Seventy7balloons"
+  Expected output:
+    Error: Found 2 arguments, was expecting 1
+    Usage: ./pointersorter singleinput
+
+testCase03:
+  ""
+  Expected output:
+
+testCase04:
+
+  Expected output:
+
+testCase05:
+  All883the893ANIMALS9==''ANIMALS]]in//theeee\\Freaking..#~jungle
+  Expected output:
+    Freaking
+    ANIMALS
+    ANIMALS
+    All
+    theeee
+    the
+    jungle
+    in
+
+testCase06:
+  "rhino sherry Hello Hello Zebra Xylophone"
+  Expected output:
+    Zebra
+    Xylophone
+    Hello
+    Hello
+    sherry
+    rhino
+
+testCase07:
+  "run runny"
+  Expected output:
+    runny
+    run
