@@ -1,0 +1,25 @@
+Motivation for Workload E:
+
+This workload allows us to see if the free blocks are merging correctly
+      If they do, then the 80 bytes would take the place of the blocks that were just freed
+      Including the allocation for 120 bytes allows us to determine if more than two free blocks are merging correctly
+
+Workload E:
+  Allocate 40-byte blocks 95 times
+      Store pointers in an array
+  For the first 32 40-byte blocks
+      Free two blocks and then allocate 80 bytes
+  For the next 63 40-byte blocks
+      Free three blocks and then allocate 120 bytes
+  Free all 80-byte and 120-byte blocks
+
+Motivation for Workload F:
+     By allocating a random number between 4 and 6, we can determine if malloc handles the situation correctly when it doesn't have enough space to create a second set of metadata
+
+Workload F:
+    Allocate 7 bytes 101 times
+    Free first block, then increment pointer by 20 and free that
+      Do this 46 times
+    Allocate memory for a random number between 4 and 6 bytes 46 times
+    Free the first block, and then increment the pointer by 10 and free that
+      Do this 101 times. This will free all pointers.
